@@ -1,1 +1,3 @@
 start file
+
+;integratedSecurity=true;encrypt=true;trustServerCertificate=true;
