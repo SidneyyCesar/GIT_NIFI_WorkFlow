@@ -1,0 +1,40 @@
+import json
+from org.apache.nifi.processor.io import InputStreamReader
+from org.apache.nifi.processor.io import OutputStreamWriter
+from java.nio.charset import StandardCharsets
+
+# Função para ler o conteúdo do flow file como JSON
+def get_json_from_flowfile(flowFile):
+    # Lê o conteúdo do FlowFile
+    input_stream = session.read(flowFile)
+    reader = InputStreamReader(input_stream, StandardCharsets.UTF_8)
+    content = reader.read()
+    input_stream.close()
+    return json.loads(content)
+
+# Função para escrever atributos no flow file
+def write_attribute(flowFile, attribute_name, attribute_value):
+    flowFile = session.putAttribute(flowFile, attribute_name, attribute_value)
+    return flowFile
+
+# Obter o flowFile e o conteúdo JSON
+flowFile = session.get()
+if flowFile is not None:
+    # Obter o JSON
+    json_data = get_json_from_flowfile(flowFile)
+
+    # Extrair xmlBase64
+    xml_base64_value = json_data.get("xmlBase64", "")
+    
+    # Extrair listaPedidos e concatenar os valores de "pedido"
+    lista_pedidos = json_data.get("listaPedidos", [])
+    
+    # Concatena os valores de "pedido" em uma string separada por vírgulas
+    pedidos_concatenados = ",".join([str(item.get("pedido")) for item in lista_pedidos])
+    
+    # Escrever os atributos no FlowFile
+    flowFile = write_attribute(flowFile, "xmlBase64Value", xml_base64_value)
+    flowFile = write_attribute(flowFile, "pedidosConcatenados", pedidos_concatenados)
+    
+    # Enviar o FlowFile para o próximo processador
+    session.transfer(flowFile, REL_SUCCESS)
