@@ -1,41 +1,38 @@
-import org.apache.nifi.processor.io.StreamCallback
-import groovy.json.JsonSlurper
-import org.apache.commons.codec.binary.Base64
-import java.nio.charset.StandardCharsets
+import sys
+from org.apache.nifi.processor.io import InputStreamCallback
+from org.apache.nifi.flowfile import FlowFile
+from java.io import InputStream, OutputStream
+import traceback
 
-def flowFile = session.get()
-if (flowFile != null) {
-    def jsonContent = new StringBuilder()
-    def numeroPedido
-    def notaFiscalXml
+# Função de callback para ler o conteúdo do FlowFile
+class ErrorCallback(InputStreamCallback):
+    def __init__(self, flowFile, session):
+        self.flowFile = flowFile
+        self.session = session
 
-    // Read the content of the FlowFile and parse the JSON
-    flowFile = session.write(flowFile, { inputStream, outputStream ->
-        byte[] jsonBytes = inputStream.bytes
-        jsonContent.append(new String(jsonBytes, StandardCharsets.UTF_8))
-        outputStream.write(jsonBytes)
-    } as StreamCallback)
+    def process(self, inputStream):
+        try:
+            # Lê o conteúdo do FlowFile (erro ou qualquer mensagem gerada)
+            error_message = str(inputStream.read())  # Pode ser um erro gerado por SQL ou outro
 
-    // Parse the JSON
-    def parsedJson = new JsonSlurper().parseText(jsonContent.toString())
-    if (parsedJson.Pedido != null && parsedJson.XMLBase64 != null) {
-        numeroPedido = parsedJson.Pedido
-        notaFiscalXml = new String(Base64.decodeBase64(parsedJson.XMLBase64), StandardCharsets.UTF_8)
-		notaFiscalXml = notaFiscalXml.replaceAll(/<\?xml version="1\.0" encoding="[^"]*"\?>/, '<?xml version="1.0"?>')
-        notaFiscalXml = notaFiscalXml.replaceAll("'", "''")
-        // Create the SQL command
-        def sqlCommand = "EXEC tt_extrair_xml_nfe N'${notaFiscalXml}', '${numeroPedido }'"
+            # Verifica se a mensagem de erro foi gerada
+            if error_message:
+                # Registra a mensagem de erro em um atributo
+                self.session.putAttribute(self.flowFile, "error.description", error_message.strip())
 
-        // Add attributes to the FlowFile
-        flowFile = session.putAttribute(flowFile, "numero_pedido", numeroPedido.toString())
-        flowFile = session.putAttribute(flowFile, "nota_fiscal_xml", notaFiscalXml)
-        flowFile = session.putAttribute(flowFile, "sql.command", sqlCommand)
+        except Exception as e:
+            # Caso ocorra um erro ao processar o conteúdo, loga o erro
+            self.session.putAttribute(self.flowFile, "error.description", str(e))
+            traceback.print_exc()
 
-        // Transfer the FlowFile to the success relationship
-        session.transfer(flowFile, ExecuteScript.REL_SUCCESS)
-    } else {
-        // Log the error and transfer the FlowFile to the failure relationship
-        log.error("Missing required JSON fields: NumeroPedido or NotaFiscalXML")
-        session.transfer(flowFile, ExecuteScript.REL_FAILURE)
-    }
-}
+# Obtém o FlowFile da sessão
+flowFile = session.get()
+
+if flowFile is not None:
+    # Chama a função de callback para processar o FlowFile
+    callback = ErrorCallback(flowFile, session)
+    session.read(flowFile, callback)
+
+    # Transferir o FlowFile de volta à relação de sucesso ou falha
+    session.transfer(flowFile, REL_SUCCESS)  # Ou REL_FAILURE se falhar
+
