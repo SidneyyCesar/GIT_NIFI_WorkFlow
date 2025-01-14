@@ -1,3 +1,4 @@
+EXEC TT_GERA_ENTRADA_FISICA_XML_BUS @CHAVE_NFE= '${chaveNfe}', @PEDIDO='${pedido}', @ITEM_XML = ${item_xml}, @PRODUTO ='${produto}', @COR_PRODUTO='${cor_produto}', @TAMANHO=${tamanho}, @Quantidade=${quantidade:replace(',','.')}
 import org.apache.nifi.processor.io.StreamCallback
 import groovy.json.JsonSlurper
 import org.apache.commons.codec.binary.Base64
