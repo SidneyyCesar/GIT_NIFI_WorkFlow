@@ -1,3 +1,13 @@
-start file
-
-;integratedSecurity=true;encrypt=true;trustServerCertificate=true;
+{
+  "chaveNfe": "35240800275655000172550560000340551099243934",
+  "ItemsXML": [
+    {
+      "ItemXML": 1,
+      "Pedido": "0221800",
+      "Produto": "66223000004",
+      "CorProduto": "901",
+      "Tamanho": 2,
+      "Quantidade": 6400
+    }
+  ]
+}
