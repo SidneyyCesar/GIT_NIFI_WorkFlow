@@ -1,0 +1,13 @@
+{
+  "chaveNfe": "35240800275655000172550560000340551099243934",
+  "ItemsXML": [
+    {
+      "ItemXML": 1,
+      "Pedido": "pedido",
+      "Produto": "produto",
+      "CorProduto": "corProduto",
+      "Tamanho": 1,
+      "Quantidade": 2
+    }
+  ]
+}
