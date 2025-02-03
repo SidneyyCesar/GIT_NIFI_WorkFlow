@@ -11,3 +11,11 @@
     }
   ]
 }
+
+EXEC SP_Parallel_Execution
+@COMANDO = 'EXEC LINX.dbo.TTP_INTEGRA_ARQUIVO_TRANSPORTADORA_LOGGI
+				@caminho = ''\\Srvescrhypv01\repositorio$\Loggi\'',
+				@exportar = 1,
+				@enviar_sftp = 1'
+,@NOME_COMANDO = ':: ECOM :: LOGGI - Exportação de Arquivo'
+,@QTDE_PARALELO = 3
